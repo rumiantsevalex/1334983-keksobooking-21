@@ -94,10 +94,11 @@ const randomProperty = function (obj) {
 let announcements = [];
 
 // генерируем объявление
+let announcementsAmount = 8;
 let createAnnouncements = function () {
   let randomLocationX = randomInteger(LOCATION.X.MIN, LOCATION.X.MAX) - PINSIZE.WIDTH / 2;
   let randomLocationY = randomInteger(LOCATION.Y.MIN, LOCATION.Y.MAX) - PINSIZE.HEIGHT;
-  let avatarNumber = `0` + randomInteger(1, 8);
+  let avatarNumber = `0` + randomInteger(1, announcementsAmount);
 
   let announcement = {
     author: {
@@ -125,7 +126,7 @@ let createAnnouncements = function () {
 };
 
 // Делаем несколько объявлений
-for (let j = 0; j < 8; j++) {
+for (let j = 0; j < announcementsAmount; j++) {
   announcements.push(createAnnouncements(j));
 }
 
@@ -133,10 +134,10 @@ for (let j = 0; j < 8; j++) {
 let map = document.querySelector(`.map`);
 map.classList.remove(`map--faded`);
 
+// генерируем метку
 const mapPins = document.querySelector(`.map__pins`);
 const mapPinsTemplate = document.querySelector(`#pin`).content.querySelector(`.map__pin`);
 
-// генерируем метку
 const createPins = function (pinInfo) {
   let pinItem = mapPinsTemplate.cloneNode(true);
   pinItem.querySelector(`img`).src = pinInfo.author.avatar;
@@ -157,3 +158,33 @@ const renderPins = function (pinsInfo) {
 };
 
 renderPins(announcements);
+
+// делаем карточку объявления
+const mapCardTemplate = document.querySelector(`#card`).content.querySelector(`.map__card`);
+const mapFilterContainer = document.querySelector(`.map__filters-container`);
+
+const createMapCard = function (mapCardInfo) {
+  let mapCard = mapCardTemplate.cloneNode(true);
+  mapCard.querySelector(`.popup__title`).textContent = mapCardInfo.offer.title;
+  mapCard.querySelector(`.popup__text--price`).textContent = mapCardInfo.offer.price + ` ₽/ночь`;
+  mapCard.querySelector(`.popup__type`).textContent = mapCardInfo.offer.type;
+  mapCard.querySelector(`.popup__text--capacity`).textContent = mapCardInfo.offer.rooms + ` комнаты для ` + mapCardInfo.offer.guests + ` гостей`;
+  mapCard.querySelector(`.popup__text--time`).textContent = `Заезд после ` + mapCardInfo.offer.checkin + ` выезд до ` + mapCardInfo.offer.checkout;
+  mapCard.querySelector(`.popup__features`).textContent = mapCardInfo.offer.features;
+  mapCard.querySelector(`.popup__description`).textContent = mapCardInfo.offer.description;
+  mapCard.querySelector(`.popup__photos`).querySelector(`img`).src = mapCardInfo.offer.photos;
+  mapCard.querySelector(`.popup__avatar`).src = mapCardInfo.author.avatar;
+
+  return mapCard;
+};
+
+// создаем фрагмент из всех карточек и вставляем карточку в блок map перед блоком .map__filters-container
+const renderMapCards = function (mapCardsInfo) {
+  let mapCardsFragment = document.createDocumentFragment();
+  for (let j = 0; j < mapCardsInfo.length; j++) {
+    mapCardsFragment.appendChild(createMapCard(mapCardsInfo[j]));
+  }
+  mapFilterContainer.before(mapCardsFragment);
+};
+
+renderMapCards(announcements);
