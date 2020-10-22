@@ -130,9 +130,25 @@ for (let j = 0; j < announcementsAmount; j++) {
   announcements.push(createAnnouncements(j));
 }
 
-// "Активируем" карту для показа меток-объявлений
-let map = document.querySelector(`.map`);
-map.classList.remove(`map--faded`);
+// делаем поля формы неактивными
+const adForm = document.querySelector(`.ad-form`);
+const adFormElements = adForm.querySelectorAll(`fieldset`);
+
+const deactivateForm = function () {
+  for (let i = 0; i < adFormElements.length; i++) {
+    let adFormElement = adFormElements[i];
+    adFormElement.setAttribute(`disabled`, `disabled`);
+  }
+};
+deactivateForm();
+
+// делаем поля формы активными
+const activateForm = function () {
+  for (let i = 0; i < adFormElements.length; i++) {
+    let adFormElement = adFormElements[i];
+    adFormElement.removeAttribute(`disabled`, `disabled`);
+  }
+};
 
 // генерируем метку
 const mapPins = document.querySelector(`.map__pins`);
@@ -156,8 +172,6 @@ const renderPins = function (pinsInfo) {
   }
   mapPins.appendChild(pinsFragment);
 };
-
-renderPins(announcements);
 
 // делаем карточку объявления
 const mapCardTemplate = document.querySelector(`#card`).content.querySelector(`.map__card`);
@@ -187,4 +201,60 @@ const renderMapCards = function (mapCardsInfo) {
   mapFilterContainer.before(mapCardsFragment);
 };
 
-renderMapCards(announcements);
+// заполняем координаты в адресную строку
+const adressInput = document.querySelector(`#address`);
+const mainPin = document.querySelector(`.map__pin--main`);
+adressInput.value = (mainPin.offsetLeft + mainPin.offsetWidth / 2) + `, ` + (mainPin.offsetTop + mainPin.offsetHeight);
+
+// "Активируем" карту
+const map = document.querySelector(`.map`);
+
+mainPin.addEventListener(`mousedown`, function (evt) {
+  if (evt.button === 0) {
+    map.classList.remove(`map--faded`);
+    adForm.classList.remove(`ad-form--disabled`);
+    activateForm();
+    renderPins(announcements);
+    renderMapCards(announcements);
+  }
+});
+
+mainPin.addEventListener(`keydown`, function (evt) {
+  if (evt.keyCode === 13) {
+    map.classList.remove(`map--faded`);
+    adForm.classList.remove(`ad-form--disabled`);
+    activateForm();
+    renderPins(announcements);
+    renderMapCards(announcements);
+  }
+});
+
+const roomNumber = document.querySelector(`#room_number`);
+const roomCapasity = document.querySelector(`#capacity`);
+const roomCapasityOptions = roomCapasity.querySelectorAll(`option`);
+
+let roomsCapacitySync = function () {
+  switch (roomNumber.value) {
+    case `1`:
+      roomCapasityOptions[0].setAttribute(`disabled`, `disabled`);
+      roomCapasityOptions[1].setAttribute(`disabled`, `disabled`);
+      roomCapasityOptions[2].setAttribute(`selected`, true);
+      roomCapasityOptions[3].setAttribute(`disabled`, `disabled`);
+      break;
+    case `2`:
+      roomCapasityOptions[0].setAttribute(`disabled`, `disabled`);
+      roomCapasityOptions[3].setAttribute(`disabled`, `disabled`);
+      break;
+    case `3`:
+      roomCapasityOptions[3].setAttribute(`disabled`, `disabled`);
+      break;
+    case `100`:
+      roomCapasityOptions[0].setAttribute(`disabled`, `disabled`);
+      roomCapasityOptions[1].setAttribute(`disabled`, `disabled`);
+      roomCapasityOptions[2].setAttribute(`disabled`, `disabled`);
+      roomCapasityOptions[3].setAttribute(`selected`, true);
+      break;
+  }
+};
+
+roomNumber.addEventListener(`change`, roomsCapacitySync);
