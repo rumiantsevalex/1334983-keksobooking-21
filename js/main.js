@@ -90,6 +90,13 @@ const randomProperty = function (obj) {
   return obj[keys[keys.length * Math.random() << 0]];
 };
 
+// закрываем попап с помощью ESC
+let onEscDown = function (evt) {
+  if (evt.keyCode === 27) {
+    document.querySelector(`.popup`).remove();
+  }
+};
+
 // массив для объявлений
 let announcements = [];
 
@@ -160,7 +167,10 @@ const createPins = function (pinInfo) {
   pinItem.style.left = pinInfo.location.x + PINSIZE.WIDTH / 2 + `px`;
   pinItem.style.top = pinInfo.location.y + PINSIZE.HEIGHT + `px`;
   pinItem.querySelector(`img`).alt = pinInfo.offer.title;
-
+  pinItem.addEventListener(`click`, function () {
+    renderMapCard(pinInfo);
+    document.addEventListener(`keydown`, onEscDown);
+  });
   return pinItem;
 };
 
@@ -172,6 +182,19 @@ const renderPins = function (pinsInfo) {
   }
   mapPins.appendChild(pinsFragment);
 };
+
+// Генерируем фотографии номеров
+let createPhotosFragment = function (mapCardInfo) {
+  let photosFragment = document.createDocumentFragment();
+  let popupPhoto = document.querySelector(`template`).content.querySelector(`.popup__photo`);
+  for (let t = 0; t < mapCardInfo.offer.photos.length; t++) {
+    let popupPhotoItem = popupPhoto.cloneNode(true);
+    popupPhotoItem.src = mapCardInfo.offer.photos[t];
+    photosFragment.appendChild(popupPhotoItem);
+  }
+  return photosFragment;
+};
+
 
 // делаем карточку объявления
 const mapCardTemplate = document.querySelector(`#card`).content.querySelector(`.map__card`);
@@ -186,18 +209,25 @@ const createMapCard = function (mapCardInfo) {
   mapCard.querySelector(`.popup__text--time`).textContent = `Заезд после ` + mapCardInfo.offer.checkin + ` выезд до ` + mapCardInfo.offer.checkout;
   mapCard.querySelector(`.popup__features`).textContent = mapCardInfo.offer.features;
   mapCard.querySelector(`.popup__description`).textContent = mapCardInfo.offer.description;
-  mapCard.querySelector(`.popup__photos`).querySelector(`img`).src = mapCardInfo.offer.photos;
+  mapCard.querySelector(`.popup__photos`).removeChild(mapCard.querySelector(`.popup__photo`));
+  mapCard.querySelector(`.popup__photos`).appendChild(createPhotosFragment(mapCardInfo));
   mapCard.querySelector(`.popup__avatar`).src = mapCardInfo.author.avatar;
+  let closeAd = mapCard.querySelector(`.popup__close`);
+  closeAd.addEventListener(`click`, function () {
+    mapCard.remove();
+    document.removeEventListener(`click`, onEscDown);
+  });
 
   return mapCard;
 };
 
-// создаем фрагмент из всех карточек и вставляем карточку в блок map перед блоком .map__filters-container
-const renderMapCards = function (mapCardsInfo) {
-  let mapCardsFragment = document.createDocumentFragment();
-  for (let j = 0; j < mapCardsInfo.length; j++) {
-    mapCardsFragment.appendChild(createMapCard(mapCardsInfo[j]));
+// Вставляем карточку на карту
+const renderMapCard = function (mapCardsInfo) {
+  if (document.querySelector(`.popup`)) {
+    document.querySelector(`.popup`).remove();
   }
+  let mapCardsFragment = document.createDocumentFragment();
+  mapCardsFragment.appendChild(createMapCard(mapCardsInfo));
   mapFilterContainer.before(mapCardsFragment);
 };
 
@@ -209,26 +239,26 @@ adressInput.value = (mainPin.offsetLeft + mainPin.offsetWidth / 2) + `, ` + (mai
 // "Активируем" карту
 const map = document.querySelector(`.map`);
 
+const getPageActive = function () {
+  map.classList.remove(`map--faded`);
+  adForm.classList.remove(`ad-form--disabled`);
+  activateForm();
+  renderPins(announcements);
+};
+
 mainPin.addEventListener(`mousedown`, function (evt) {
   if (evt.button === 0) {
-    map.classList.remove(`map--faded`);
-    adForm.classList.remove(`ad-form--disabled`);
-    activateForm();
-    renderPins(announcements);
-    renderMapCards(announcements);
+    getPageActive();
   }
 });
 
 mainPin.addEventListener(`keydown`, function (evt) {
   if (evt.keyCode === 13) {
-    map.classList.remove(`map--faded`);
-    adForm.classList.remove(`ad-form--disabled`);
-    activateForm();
-    renderPins(announcements);
-    renderMapCards(announcements);
+    getPageActive();
   }
 });
 
+// Синхронизируем количество комнат с количеством гостей
 const roomNumber = document.querySelector(`#room_number`);
 const roomCapasity = document.querySelector(`#capacity`);
 const roomCapasityOptions = roomCapasity.querySelectorAll(`option`);
@@ -258,3 +288,61 @@ let roomsCapacitySync = function () {
 };
 
 roomNumber.addEventListener(`change`, roomsCapacitySync);
+
+// Указываем минимальную стоимость для каждого типа жилья
+const housingType = document.querySelector(`#type`);
+const housingPrice = document.querySelector(`#price`);
+
+let housingMinCost = function () {
+  switch (housingType.value) {
+    case `bungalow`:
+      housingPrice.setAttribute(`min`, 0);
+      break;
+    case `flat`:
+      housingPrice.setAttribute(`min`, 1000);
+      break;
+    case `house`:
+      housingPrice.setAttribute(`min`, 5000);
+      break;
+    case `palace`:
+      housingPrice.setAttribute(`min`, 10000);
+      break;
+  }
+};
+
+housingType.addEventListener(`change`, housingMinCost);
+
+// Синхронизируем поля заезда-выезда
+const timeIn = document.querySelector(`#timein`);
+const timeOut = document.querySelector(`#timeout`);
+
+let timeInSync = function () {
+  switch (timeIn.value) {
+    case `12:00`:
+      timeOut.value = `12:00`;
+      break;
+    case `13:00`:
+      timeOut.value = `13:00`;
+      break;
+    case `14:00`:
+      timeOut.value = `14:00`;
+      break;
+  }
+};
+
+let timeOutSync = function () {
+  switch (timeOut.value) {
+    case `12:00`:
+      timeIn.value = `12:00`;
+      break;
+    case `13:00`:
+      timeIn.value = `13:00`;
+      break;
+    case `14:00`:
+      timeIn.value = `14:00`;
+      break;
+  }
+};
+
+timeIn.addEventListener(`change`, timeInSync);
+timeOut.addEventListener(`change`, timeOutSync);
