@@ -75,8 +75,7 @@ const PINSIZE = {
 
 // генерируем случайное целое число
 const randomInteger = function (min, max) {
-  let rand = min + Math.random() * (max - min);
-  return Math.floor(rand);
+  return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
 // аргумент shuffle для перемешивания sort()
@@ -88,6 +87,17 @@ const shuffle = function () {
 const randomProperty = function (obj) {
   const keys = Object.keys(obj);
   return obj[keys[keys.length * Math.random() << 0]];
+};
+
+// для получения случайного значения без повторов
+let compareRandom = function () {
+  return Math.random() - 0.5;
+};
+
+// получаеи набор особенностей номера
+let getFeatures = function () {
+  FEATURESDATA.sort(compareRandom);
+  return FEATURESDATA.slice(0, randomInteger(1, FEATURESDATA.length));
 };
 
 // закрываем попап с помощью ESC
@@ -120,7 +130,7 @@ let createAnnouncements = function () {
       guests: randomProperty(guestsData),
       checkin: CHECKINDATA[Math.floor(Math.random() * CHECKINDATA.length)],
       checkout: CHECKOUTDATA[Math.floor(Math.random() * CHECKOUTDATA.length)],
-      features: FEATURESDATA.sort(shuffle).slice(0, randomInteger(0, FEATURESDATA.length)),
+      features: getFeatures(),
       description: `очень уютно`,
       photos: PHOTOSDATA.sort(shuffle).slice(0, randomInteger(0, PHOTOSDATA.length)),
     },
@@ -195,6 +205,16 @@ let createPhotosFragment = function (mapCardInfo) {
   return photosFragment;
 };
 
+// Генерируем фичи номеров
+let createFeatureFragment = function (cardData) {
+  let featureFragment = document.createDocumentFragment();
+  for (let i = 0; i < cardData.offer.features.length; i++) {
+    let featureItem = document.createElement(`li`);
+    featureItem.className = `popup__feature popup__feature--` + cardData.offer.features[i];
+    featureFragment.appendChild(featureItem);
+  }
+  return featureFragment;
+};
 
 // делаем карточку объявления
 const mapCardTemplate = document.querySelector(`#card`).content.querySelector(`.map__card`);
@@ -207,7 +227,7 @@ const createMapCard = function (mapCardInfo) {
   mapCard.querySelector(`.popup__type`).textContent = mapCardInfo.offer.type;
   mapCard.querySelector(`.popup__text--capacity`).textContent = mapCardInfo.offer.rooms + ` комнаты для ` + mapCardInfo.offer.guests + ` гостей`;
   mapCard.querySelector(`.popup__text--time`).textContent = `Заезд после ` + mapCardInfo.offer.checkin + ` выезд до ` + mapCardInfo.offer.checkout;
-  mapCard.querySelector(`.popup__features`).textContent = mapCardInfo.offer.features;
+  mapCard.querySelector(`.popup__features`).appendChild(createFeatureFragment(mapCardInfo));
   mapCard.querySelector(`.popup__description`).textContent = mapCardInfo.offer.description;
   mapCard.querySelector(`.popup__photos`).removeChild(mapCard.querySelector(`.popup__photo`));
   mapCard.querySelector(`.popup__photos`).appendChild(createPhotosFragment(mapCardInfo));
@@ -250,7 +270,7 @@ mainPin.addEventListener(`mousedown`, function (evt) {
   if (evt.button === 0) {
     getPageActive();
   }
-});
+}, {once: true});
 
 mainPin.addEventListener(`keydown`, function (evt) {
   if (evt.keyCode === 13) {
