@@ -28,6 +28,7 @@
 
   // заполняем координаты в адресную строку
   const adressInput = document.querySelector(`#address`);
+  window.adressInput = adressInput;
   const mainPin = document.querySelector(`.map__pin--main`);
   window.mainPin = mainPin;
   adressInput.value = (mainPin.offsetLeft + mainPin.offsetWidth / 2) + `, ` + (mainPin.offsetTop + mainPin.offsetHeight);
